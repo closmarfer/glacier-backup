@@ -12,7 +12,7 @@ import (
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"glacier-backup/pkg/backup"
+	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
 
 type Config struct {

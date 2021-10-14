@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"glacier-backup/pkg/backup"
-	"glacier-backup/pkg/backup/implementations/factory"
-	"glacier-backup/pkg/backup/implementations/local"
-	"glacier-backup/pkg/backup/implementations/s3"
+	"github.com/closmarfer/glacier-backup/pkg/backup"
+	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/factory"
+	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/local"
+	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/s3"
 )
 
 const s3Key = "s3"

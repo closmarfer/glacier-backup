@@ -1,4 +1,4 @@
-module glacier-backup
+module github.com/closmarfer/glacier-backup
 
 go 1.16
 

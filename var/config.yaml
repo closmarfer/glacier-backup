@@ -7,6 +7,7 @@ ignoredPatterns: # Folder whose files will be ignored
   - "/.idea"
   - "/node_modules"
   - "/var"
+  - "/.vscode"
 selectedRemote: local # If you want to try the application before backup to S3, select "local"
 remotes:
   s3:

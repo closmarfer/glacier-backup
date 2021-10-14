@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"glacier-backup/pkg/backup"
+	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
 
 type Repository struct {

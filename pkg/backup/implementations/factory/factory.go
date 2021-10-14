@@ -3,9 +3,9 @@ package factory
 import (
 	"errors"
 
-	"glacier-backup/pkg/backup"
-	"glacier-backup/pkg/backup/implementations/local"
-	"glacier-backup/pkg/backup/implementations/s3"
+	"github.com/closmarfer/glacier-backup/pkg/backup"
+	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/local"
+	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/s3"
 )
 
 const (

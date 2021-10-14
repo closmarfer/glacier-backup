@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	"glacier-backup/pkg/backup"
-	"glacier-backup/pkg/backup/serviceprovider"
+	"github.com/closmarfer/glacier-backup/pkg/backup"
+	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
 )
 
 type Handler struct {

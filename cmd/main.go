@@ -1,7 +1,7 @@
 package main
 
 import (
-	"glacier-backup/pkg/backup/handlers"
+	"github.com/closmarfer/glacier-backup/pkg/backup/handlers"
 )
 
 func main() {
