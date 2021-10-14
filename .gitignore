@@ -6,7 +6,7 @@
 .vscode
 
 # Generated & compiled files
-# bin/
+bin/
 vendor/
 
 var/tmp/
