@@ -1,0 +1,21 @@
+pathsToBackup: # Lists of paths from your computer to be backuped
+  - "/Users/kenobi/Pictures"
+ignoredPatterns: # Folder whose files will be ignored
+  - "/.git"
+  - "/.DS_Store"
+  - "/vendor"
+  - "/.idea"
+  - "/node_modules"
+  - "/var"
+selectedRemote: local # If you want to try the application before backup to S3, select "local"
+remotes:
+  s3:
+    customConfig:
+      bucket: kenobi-bucket
+      region: eu-west-1
+      profileName: kenobi-glacier # Profile name defined in your $HOME/.aws/credentials file
+  local:
+    customConfig:
+      # If selectedRemote is local, the files will be copied here
+      localPath: /Users/kenobi/.glacier-backup/local
+      timeout: 100ms # Timeout to simulate the HTTP request to S3

@@ -1,0 +1,12 @@
+# Environment / Editor
+.DS_Store
+.idea
+.*.swp
+.run
+.vscode
+
+# Generated & compiled files
+# bin/
+vendor/
+
+var/tmp/
