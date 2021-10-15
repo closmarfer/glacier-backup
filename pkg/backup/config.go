@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const glacierBackupFolder = "/.glacier-backup"
+const glacierBackupFolder = ".glacier-backup"
 
 type Remote struct {
 	CustomConfig map[string]string `yaml:"customConfig"`
