@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -82,25 +81,20 @@ func (h Checker) Exists(path string, lastUpdate time.Time) bool {
 	return uploaded.After(lastUpdate)
 }
 
-func (h Checker) Close(ctx context.Context) error {
-	files := []string{}
+func (h *Checker) Close(ctx context.Context) error {
+	uPath, _ := h.cfg.getApplicationPath("uploaded_files.csv")
+	csvFile, err := os.Open(uPath)
+	if err != nil {
+		return err
+	}
+	defer csvFile.Close()
+
+	w := csv.NewWriter(csvFile)
+
 	for path, t := range h.files {
-		r := fmt.Sprintf("%v,%v", path, t.Format(timeLayout))
-		files = append(files, r)
+		_ = w.Write([]string{path, t.Format(timeLayout)})
 	}
-
-	contents := strings.Join(files, "\n")
-
-	uPath, err := h.cfg.getApplicationPath("uploaded_files.csv")
-
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(uPath, []byte(contents), os.ModePerm)
-	if err != nil {
-		return err
-	}
+	w.Flush()
 
 	err = h.filesRepository.PutEditable(ctx, uPath, "/uploaded_files.csv")
 	if err != nil {
