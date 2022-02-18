@@ -6,6 +6,7 @@ install-config:
 	cp ./var/config.yaml "$(HOME)/.glacier-backup/config.yaml"
 
 create-app-folder:
+	cp "$(HOME)/.glacier-backup" "$(HOME)/.glacier-backup_bk"
 	mkdir -p "$(HOME)/.glacier-backup"
 
 uninstall:

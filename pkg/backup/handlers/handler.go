@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
@@ -47,23 +48,29 @@ func (h Handler) Run() {
 		errChan <- back.Upload(ctx, errChan)
 	}()
 
+	tick := time.NewTimer(60 * time.Second)
+
 	for {
 		select {
+		case t := <-tick.C:
+			fmt.Printf("Processing. Time: %v\n", t.Format("2006-02-01 15:04"))
+			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", eChecker.Uploaded(), eChecker.Ignored())
 		case <-shutdown:
 			fmt.Println("Stopping program")
 			err := eChecker.Close(ctx)
 			if err != nil {
-				fmt.Println(fmt.Sprintf("error closing existent files checker: %v", err))
+				fmt.Printf("error closing existent files checker: %v", err)
 			}
+			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", eChecker.Uploaded(), eChecker.Ignored())
 			cancel()
 		case <-ctx.Done():
-			fmt.Println(fmt.Sprintf("Context finished"))
+			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", eChecker.Uploaded(), eChecker.Ignored())
+			fmt.Println("Process finished")
 			return
 		case err := <-errChan:
 			if err != nil {
-				fmt.Println(fmt.Sprintf("Error processing files: %v", err))
+				fmt.Printf("Error processing files: %v", err)
 			}
-
 		}
 	}
 }

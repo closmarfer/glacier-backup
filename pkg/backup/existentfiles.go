@@ -21,6 +21,8 @@ type Checker struct {
 	filesRepository RemoteFilesRepository
 	files           map[string]time.Time
 	cfg             Config
+	uploaded        int
+	ignored         int
 }
 
 func NewChecker(filesRepository RemoteFilesRepository, cfg Config) *Checker {
@@ -63,13 +65,14 @@ func (h Checker) Open(ctx context.Context) error {
 	return nil
 }
 
-func (h Checker) Add(path string, uploadedAt time.Time) {
+func (h *Checker) Add(path string, uploadedAt time.Time) {
 	lock.Lock()
 	defer lock.Unlock()
 	h.files[path] = uploadedAt
+	h.uploaded++
 }
 
-func (h Checker) Exists(path string, lastUpdate time.Time) bool {
+func (h *Checker) Exists(path string, lastUpdate time.Time) bool {
 	lock.Lock()
 	defer lock.Unlock()
 	uploaded, ok := h.files[path]
@@ -78,12 +81,17 @@ func (h Checker) Exists(path string, lastUpdate time.Time) bool {
 		return false
 	}
 
-	return uploaded.After(lastUpdate)
+	isAfter := uploaded.After(lastUpdate)
+	if isAfter {
+		h.ignored++
+	}
+
+	return isAfter
 }
 
 func (h *Checker) Close(ctx context.Context) error {
 	uPath, _ := h.cfg.getApplicationPath("uploaded_files.csv")
-	csvFile, err := os.Open(uPath)
+	csvFile, err := os.Create(uPath)
 	if err != nil {
 		return err
 	}
@@ -103,4 +111,16 @@ func (h *Checker) Close(ctx context.Context) error {
 	h.files = map[string]time.Time{}
 
 	return nil
+}
+
+func (h *Checker) Ignored() int {
+	lock.Lock()
+	defer lock.Unlock()
+	return h.ignored
+}
+
+func (h *Checker) Uploaded() int {
+	lock.Lock()
+	defer lock.Unlock()
+	return h.uploaded
 }
