@@ -48,7 +48,7 @@ func (h Handler) Run() {
 		errChan <- back.Upload(ctx, errChan)
 	}()
 
-	tick := time.NewTimer(60 * time.Second)
+	tick := time.NewTicker(60 * time.Second)
 
 	for {
 		select {
