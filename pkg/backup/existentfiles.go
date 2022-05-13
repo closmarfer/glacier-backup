@@ -124,3 +124,7 @@ func (h *Checker) Uploaded() int {
 	defer lock.Unlock()
 	return h.uploaded
 }
+
+func (h *Checker) GetFiles() map[string]time.Time {
+	return h.files
+}
