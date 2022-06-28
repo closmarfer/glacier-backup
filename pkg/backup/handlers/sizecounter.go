@@ -1,5 +1,4 @@
-package main
-
+package handlers
 
 import (
 	"context"
@@ -10,8 +9,14 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
 )
 
+type SizeCounter struct {
+}
 
-func main(){
+func NewSizeCounter() SizeCounter {
+	return SizeCounter{}
+}
+
+func (s SizeCounter) Run() {
 	cfg, err := serviceprovider.ProvideBackupConfiguration()
 	if err != nil {
 		fmt.Println("Error: ", err)
@@ -36,7 +41,7 @@ func main(){
 	for path, _ := range eChecker.GetFiles() {
 		finfo, err := os.Stat(path)
 		if err != nil {
-			continue 
+			continue
 		}
 		size += finfo.Size()
 	}
