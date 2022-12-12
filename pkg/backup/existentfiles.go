@@ -109,8 +109,7 @@ func (h *Checker) Close(ctx context.Context) error {
 		return fmt.Errorf("error putting uploaded_files.csv file: %w", err)
 	}
 	h.files = map[string]time.Time{}
-
-	return nil
+	return os.Remove(uPath)
 }
 
 func (h *Checker) Ignored() int {
