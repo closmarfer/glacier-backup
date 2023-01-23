@@ -1,5 +1,7 @@
-install: create-app-folder install-config
+build:
 	go build -o bin/glacier-backup cmd/main.go
+
+install: create-app-folder install-config build
 	cp bin/glacier-backup /usr/local/bin/glacier-backup
 
 install-config:
