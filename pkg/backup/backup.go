@@ -28,19 +28,17 @@ func (f FileNotFoundError) Error() string {
 	return "file not found " + f.filePath
 }
 
-func (f FileNotFoundError) Exists() bool {
-	return false
-}
-
 type RemoteFilesRepository interface {
 	PutGlacier(ctx context.Context, localPath string) error
 	PutEditable(ctx context.Context, localPath string, remotePath string) error
+	Delete(ctx context.Context, remotePath string) error
 	Get(ctx context.Context, remotePath string) (string, error)
 }
 
 type ExistentFilesChecker interface {
 	Open(ctx context.Context) error
 	Add(path string, uploadedAt time.Time)
+	Remove(path string)
 	Exists(path string, lastUpdated time.Time) bool
 	Close(ctx context.Context) error
 }

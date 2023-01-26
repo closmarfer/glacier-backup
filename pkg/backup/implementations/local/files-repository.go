@@ -17,6 +17,12 @@ type Repository struct {
 	timeout   time.Duration
 }
 
+func (r Repository) Delete(_ context.Context, remotePath string) error {
+	newPath := r.getPath(remotePath)
+	time.Sleep(r.timeout)
+	return os.Remove(newPath)
+}
+
 func NewRepository(cfg backup.Config) (Repository, error) {
 	localPath, ok := cfg.Remotes["local"].CustomConfig["localPath"]
 	if !ok {
@@ -44,7 +50,7 @@ func (r Repository) PutEditable(ctx context.Context, localPath string, remotePat
 	return r.put(ctx, localPath, remotePath)
 }
 
-func (r Repository) put(ctx context.Context, localPath string, remotePath string) error {
+func (r Repository) put(_ context.Context, localPath string, remotePath string) error {
 	fileContents, err := ioutil.ReadFile(localPath)
 	if err != nil {
 		return err
@@ -66,7 +72,7 @@ func (r Repository) put(ctx context.Context, localPath string, remotePath string
 	return ioutil.WriteFile(newPath, fileContents, os.ModePerm)
 }
 
-func (r Repository) Get(ctx context.Context, remotePath string) (string, error) {
+func (r Repository) Get(_ context.Context, remotePath string) (string, error) {
 	file, err := ioutil.ReadFile(r.getPath(remotePath))
 	if err != nil {
 		return "", backup.NewFileNotFoundError(remotePath)

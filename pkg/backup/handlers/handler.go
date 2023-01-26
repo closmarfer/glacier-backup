@@ -8,34 +8,18 @@ import (
 	"time"
 
 	"github.com/closmarfer/glacier-backup/pkg/backup"
-	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
 )
 
 type Handler struct {
+	checker  *backup.Checker
+	backuper backup.Backuper
 }
 
-func NewHandler() Handler {
-	return Handler{}
+func NewHandler(checker *backup.Checker, backuper backup.Backuper) Handler {
+	return Handler{checker: checker, backuper: backuper}
 }
 
 func (h Handler) Run() {
-	cfg, err := serviceprovider.ProvideBackupConfiguration()
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
-
-	repo, err := serviceprovider.ProvideRemoteFilesRepository(cfg)
-
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
-
-	eChecker := backup.NewChecker(repo, cfg)
-
-	back := backup.NewBackuper(repo, eChecker, cfg)
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	shutdown := make(chan os.Signal, 1)
@@ -45,7 +29,7 @@ func (h Handler) Run() {
 
 	go func() {
 		defer cancel()
-		errChan <- back.Upload(ctx, errChan)
+		errChan <- h.backuper.Upload(ctx, errChan)
 	}()
 
 	tick := time.NewTicker(60 * time.Second)
@@ -54,17 +38,17 @@ func (h Handler) Run() {
 		select {
 		case t := <-tick.C:
 			fmt.Printf("Processing. Time: %v\n", t.Format("2006-02-01 15:04"))
-			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", eChecker.Uploaded(), eChecker.Ignored())
+			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", h.checker.Uploaded(), h.checker.Ignored())
 		case <-shutdown:
 			fmt.Println("Stopping program")
-			err := eChecker.Close(ctx)
+			err := h.checker.Close(ctx)
 			if err != nil {
 				fmt.Printf("error closing existent files checker: %v", err)
 			}
-			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", eChecker.Uploaded(), eChecker.Ignored())
+			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", h.checker.Uploaded(), h.checker.Ignored())
 			cancel()
 		case <-ctx.Done():
-			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", eChecker.Uploaded(), eChecker.Ignored())
+			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", h.checker.Uploaded(), h.checker.Ignored())
 			fmt.Println("Process finished")
 			return
 		case err := <-errChan:

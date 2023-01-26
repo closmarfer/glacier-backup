@@ -6,39 +6,30 @@ import (
 	"os"
 
 	"github.com/closmarfer/glacier-backup/pkg/backup"
-	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
 )
 
 type SizeCounter struct {
+	cfg     backup.Config
+	repo    backup.RemoteFilesRepository
+	checker *backup.Checker
 }
 
-func NewSizeCounter() SizeCounter {
-	return SizeCounter{}
+func NewSizeCounter(checker *backup.Checker) SizeCounter {
+	return SizeCounter{checker: checker}
 }
 
 func (s SizeCounter) Run() {
-	cfg, err := serviceprovider.ProvideBackupConfiguration()
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
-
-	repo, err := serviceprovider.ProvideRemoteFilesRepository(cfg)
-
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
-
-	eChecker := backup.NewChecker(repo, cfg)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	eChecker.Open(ctx)
+	err := s.checker.Open(ctx)
+	if err != nil {
+		fmt.Printf("Error opening: %v\n", err.Error())
+		return
+	}
 
 	size := int64(0)
-	for path, _ := range eChecker.GetFiles() {
+	for path := range s.checker.GetFiles() {
 		finfo, err := os.Stat(path)
 		if err != nil {
 			continue
@@ -46,5 +37,5 @@ func (s SizeCounter) Run() {
 		size += finfo.Size()
 	}
 
-	fmt.Printf("Size of uploaded files: %v GB\n", (size / 1000_000_000))
+	fmt.Printf("Size of uploaded files: %v GB\n", size/1000_000_000)
 }

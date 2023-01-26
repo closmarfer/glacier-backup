@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	http2 "net/http"
 
@@ -24,6 +25,19 @@ type Repository struct {
 	client *s3.Client
 }
 
+func (repo Repository) Delete(ctx context.Context, remotePath string) error {
+	if string(remotePath[0]) == "/" {
+		remotePath = remotePath[1:]
+	}
+
+	_, err := repo.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(repo.config.Bucket),
+		Key:    aws.String(remotePath),
+	})
+
+	return err
+}
+
 func NewS3Repository(config Config, client *s3.Client) Repository {
 	return Repository{config: config, client: client}
 }
@@ -37,7 +51,6 @@ func (repo Repository) PutEditable(ctx context.Context, localPath string, remote
 }
 
 func (repo Repository) put(ctx context.Context, localPath string, remotePath string, s types.StorageClass) error {
-
 	if string(remotePath[0]) == "/" {
 		remotePath = remotePath[1:]
 	}
@@ -72,7 +85,12 @@ func (repo Repository) Get(ctx context.Context, remotePath string) (string, erro
 		return "", err
 	}
 
-	defer object.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println("error closing body: " + err.Error())
+		}
+	}(object.Body)
 
 	buf := new(bytes.Buffer)
 	_, err = buf.ReadFrom(object.Body)

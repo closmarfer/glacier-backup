@@ -72,6 +72,12 @@ func (h *Checker) Add(path string, uploadedAt time.Time) {
 	h.uploaded++
 }
 
+func (h *Checker) Remove(path string) {
+	lock.Lock()
+	defer lock.Unlock()
+	delete(h.files, path)
+}
+
 func (h *Checker) Exists(path string, lastUpdate time.Time) bool {
 	lock.Lock()
 	defer lock.Unlock()
@@ -95,7 +101,12 @@ func (h *Checker) Close(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer csvFile.Close()
+	defer func(csvFile *os.File) {
+		err := csvFile.Close()
+		if err != nil {
+			fmt.Println("error closing file: " + err.Error())
+		}
+	}(csvFile)
 
 	w := csv.NewWriter(csvFile)
 
