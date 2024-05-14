@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -51,7 +50,7 @@ func (r Repository) PutEditable(ctx context.Context, localPath string, remotePat
 }
 
 func (r Repository) put(_ context.Context, localPath string, remotePath string) error {
-	fileContents, err := ioutil.ReadFile(localPath)
+	fileContents, err := os.ReadFile(localPath)
 	if err != nil {
 		return err
 	}
@@ -69,11 +68,11 @@ func (r Repository) put(_ context.Context, localPath string, remotePath string) 
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(newPath, fileContents, os.ModePerm)
+	return os.WriteFile(newPath, fileContents, os.ModePerm)
 }
 
 func (r Repository) Get(_ context.Context, remotePath string) (string, error) {
-	file, err := ioutil.ReadFile(r.getPath(remotePath))
+	file, err := os.ReadFile(r.getPath(remotePath))
 	if err != nil {
 		return "", backup.NewFileNotFoundError(remotePath)
 	}
