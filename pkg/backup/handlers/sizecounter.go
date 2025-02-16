@@ -11,10 +11,10 @@ import (
 type SizeCounter struct {
 	cfg     backup.Config
 	repo    backup.RemoteFilesRepository
-	checker *backup.Checker
+	checker backup.ExistentFilesChecker
 }
 
-func NewSizeCounter(checker *backup.Checker) SizeCounter {
+func NewSizeCounter(checker backup.ExistentFilesChecker) SizeCounter {
 	return SizeCounter{checker: checker}
 }
 

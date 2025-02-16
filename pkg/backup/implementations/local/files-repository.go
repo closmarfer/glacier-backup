@@ -17,6 +17,14 @@ type Repository struct {
 	timeout   time.Duration
 }
 
+func (r Repository) Download(_ context.Context, key string, path string) error {
+	file, err := os.ReadFile(key)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, file, 0600)
+}
+
 func (r Repository) Delete(_ context.Context, remotePath string) error {
 	newPath := r.getPath(remotePath)
 	time.Sleep(r.timeout)
@@ -46,22 +54,27 @@ func (r Repository) PutGlacier(ctx context.Context, localPath string) error {
 	return r.put(ctx, localPath, localPath)
 }
 
-func (r Repository) PutEditable(ctx context.Context, localPath string, remotePath string) error {
-	return r.put(ctx, localPath, remotePath)
+func (r Repository) PutEditable(_ context.Context, localPath string, remotePath string) error {
+	fileContents, err := ioutil.ReadFile(localPath)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(remotePath, fileContents, os.ModePerm)
 }
 
 func (r Repository) put(_ context.Context, localPath string, remotePath string) error {
+	sep := string(os.PathSeparator)
 	fileContents, err := ioutil.ReadFile(localPath)
 	if err != nil {
 		return err
 	}
 	newPath := r.getPath(remotePath)
 
-	parts := strings.Split(newPath, "/")
+	parts := strings.Split(newPath, sep)
 
 	parts2 := parts[0 : len(parts)-1]
 
-	newPath2 := strings.Join(parts2, "/")
+	newPath2 := strings.Join(parts2, sep)
 
 	time.Sleep(r.timeout)
 

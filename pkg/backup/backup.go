@@ -33,6 +33,7 @@ type RemoteFilesRepository interface {
 	PutEditable(ctx context.Context, localPath string, remotePath string) error
 	Delete(ctx context.Context, remotePath string) error
 	Get(ctx context.Context, remotePath string) (string, error)
+	Download(ctx context.Context, key string, path string) error
 }
 
 type ExistentFilesChecker interface {
@@ -41,6 +42,9 @@ type ExistentFilesChecker interface {
 	Remove(path string)
 	Exists(path string, lastUpdated time.Time) bool
 	Close(ctx context.Context) error
+	Ignored() int
+	Uploaded() int
+	GetFiles() map[string]time.Time
 }
 
 type Backuper struct {

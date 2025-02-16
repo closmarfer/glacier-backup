@@ -10,12 +10,14 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
 
+const processingFormat = "Processing. Uploaded: %v, Ignored: %v\n"
+
 type Handler struct {
-	checker  *backup.Checker
+	checker  backup.ExistentFilesChecker
 	backuper backup.Backuper
 }
 
-func NewHandler(checker *backup.Checker, backuper backup.Backuper) Handler {
+func NewHandler(checker backup.ExistentFilesChecker, backuper backup.Backuper) Handler {
 	return Handler{checker: checker, backuper: backuper}
 }
 
@@ -38,17 +40,17 @@ func (h Handler) Run() {
 		select {
 		case t := <-tick.C:
 			fmt.Printf("Processing. Time: %v\n", t.Format("2006-02-01 15:04"))
-			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", h.checker.Uploaded(), h.checker.Ignored())
+			fmt.Printf(processingFormat, h.checker.Uploaded(), h.checker.Ignored())
 		case <-shutdown:
 			fmt.Println("Stopping program")
 			err := h.checker.Close(ctx)
 			if err != nil {
 				fmt.Printf("error closing existent files checker: %v", err)
 			}
-			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", h.checker.Uploaded(), h.checker.Ignored())
+			fmt.Printf(processingFormat, h.checker.Uploaded(), h.checker.Ignored())
 			cancel()
 		case <-ctx.Done():
-			fmt.Printf("Processing. Uploaded: %v, Ignored: %v\n", h.checker.Uploaded(), h.checker.Ignored())
+			fmt.Printf(processingFormat, h.checker.Uploaded(), h.checker.Ignored())
 			fmt.Println("Process finished")
 			return
 		case err := <-errChan:

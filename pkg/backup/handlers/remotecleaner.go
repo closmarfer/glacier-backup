@@ -10,10 +10,10 @@ import (
 
 type RemoteCleaner struct {
 	repo    backup.RemoteFilesRepository
-	checker *backup.Checker
+	checker backup.ExistentFilesChecker
 }
 
-func NewRemoteCleaner(checker *backup.Checker, repo backup.RemoteFilesRepository) RemoteCleaner {
+func NewRemoteCleaner(checker backup.ExistentFilesChecker, repo backup.RemoteFilesRepository) RemoteCleaner {
 	return RemoteCleaner{checker: checker, repo: repo}
 }
 
