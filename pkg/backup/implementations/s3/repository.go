@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	http2 "net/http"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
@@ -72,17 +73,33 @@ func (repo Repository) put(ctx context.Context, localPath string, remotePath str
 }
 
 func (repo Repository) Get(ctx context.Context, remotePath string) (string, error) {
+	buff, err := repo.getBuffer(ctx, remotePath)
+	if err != nil {
+		return "", err
+	}
+	return buff.String(), nil
+}
+
+func (repo Repository) Download(ctx context.Context, key string, path string) error {
+	buff, err := repo.getBuffer(ctx, key)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, buff.Bytes(), 0644)
+}
+
+func (repo Repository) getBuffer(ctx context.Context, remotePath string) (*bytes.Buffer, error) {
 	object, err := repo.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(repo.config.Bucket),
 		Key:    aws.String(remotePath),
 	})
-
+	buff := new(bytes.Buffer)
 	if err != nil {
 		var responseError *awshttp.ResponseError
 		if errors.As(err, &responseError) && responseError.ResponseError.HTTPStatusCode() == http2.StatusNotFound {
-			return "", backup.NewFileNotFoundError(remotePath)
+			return buff, backup.NewFileNotFoundError(remotePath)
 		}
-		return "", err
+		return buff, err
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -92,11 +109,6 @@ func (repo Repository) Get(ctx context.Context, remotePath string) (string, erro
 		}
 	}(object.Body)
 
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(object.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
+	_, err = buff.ReadFrom(object.Body)
+	return buff, err
 }

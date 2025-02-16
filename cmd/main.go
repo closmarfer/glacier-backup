@@ -9,6 +9,8 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup/handlers"
 )
 
+const databaseName = "backup.db"
+
 func main() {
 	cfg, err := serviceprovider.ProvideBackupConfiguration()
 	if err != nil {
@@ -22,7 +24,10 @@ func main() {
 		return
 	}
 
-	eChecker := backup.NewChecker(repo, cfg)
+	eChecker := backup.NewSQLiteChecker(backup.SqliteConfig{
+		Path: cfg.GlacierPath + string(os.PathSeparator) + databaseName,
+		Key:  cfg.DatabaseKey,
+	}, repo)
 
 	back := backup.NewBackuper(repo, eChecker, cfg)
 

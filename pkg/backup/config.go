@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 const glacierBackupFolder = ".glacier-backup"
@@ -18,6 +18,7 @@ type Config struct {
 	PathsToBackup   []string          `yaml:"pathsToBackup"`
 	IgnoredPatterns []string          `yaml:"ignoredPatterns"`
 	SelectedRemote  string            `yaml:"selectedRemote"`
+	DatabaseKey     string            `yaml:"databaseKey" default:"backup.db"`
 	Remotes         map[string]Remote `yaml:"remotes"`
 	GlacierPath     string
 }
@@ -66,7 +67,7 @@ func (conf Config) getApplicationPath(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	return fmt.Sprintf("%v/%v/%v", userHome, glacierBackupFolder, path), nil
+	sep := string(os.PathSeparator)
+	return userHome + sep + glacierBackupFolder + sep + path, nil
 
 }

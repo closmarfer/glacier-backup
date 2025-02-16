@@ -11,11 +11,11 @@ import (
 )
 
 type Handler struct {
-	checker  *backup.Checker
+	checker  backup.ExistentFilesChecker
 	backuper backup.Backuper
 }
 
-func NewHandler(checker *backup.Checker, backuper backup.Backuper) Handler {
+func NewHandler(checker backup.ExistentFilesChecker, backuper backup.Backuper) Handler {
 	return Handler{checker: checker, backuper: backuper}
 }
 
