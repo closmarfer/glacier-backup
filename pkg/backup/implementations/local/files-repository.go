@@ -17,7 +17,7 @@ type Repository struct {
 	timeout   time.Duration
 }
 
-func (r Repository) Download(ctx context.Context, key string, path string) error {
+func (r Repository) Download(_ context.Context, key string, path string) error {
 	file, err := os.ReadFile(key)
 	if err != nil {
 		return err
