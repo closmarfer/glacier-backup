@@ -44,12 +44,14 @@ func (c *SQLiteChecker) Open(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error opening database: %w", err)
 	}
+
 	c.db = db
 
 	_, err = c.db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS files (
 			path TEXT PRIMARY KEY,
-			uploaded_at DATETIME NOT NULL
+			uploaded_at DATETIME NOT NULL,
+			size_bytes BIGINT NOT NULL
 		)
 	`)
 	if err != nil {
@@ -59,13 +61,14 @@ func (c *SQLiteChecker) Open(ctx context.Context) error {
 	return nil
 }
 
-func (c *SQLiteChecker) Add(path string, uploadedAt time.Time) {
+func (c *SQLiteChecker) Add(path string, uploadedAt time.Time, size int64) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	_, err := c.db.Exec(
-		"INSERT or REPLACE INTO files (`path`, uploaded_at) VALUES (?, ?)",
+		"INSERT or REPLACE INTO files (`path`, uploaded_at, size_bytes) VALUES (?, ?, ?)",
 		path,
 		uploadedAt.Format("2006-01-02 15:04:05"),
+		size,
 	)
 	if err != nil {
 		fmt.Printf("Error adding file to database: %v\n", err)
