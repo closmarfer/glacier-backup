@@ -14,6 +14,7 @@ import (
 type pathInfo struct {
 	path       string
 	lastUpdate time.Time
+	sizeBytes  int64
 }
 
 type FileNotFoundError struct {
@@ -38,7 +39,7 @@ type RemoteFilesRepository interface {
 
 type ExistentFilesChecker interface {
 	Open(ctx context.Context) error
-	Add(path string, uploadedAt time.Time)
+	Add(path string, uploadedAt time.Time, size int64)
 	Remove(path string)
 	Exists(path string, lastUpdated time.Time) bool
 	Close(ctx context.Context) error
@@ -119,6 +120,7 @@ func (h Backuper) iterate(ctx context.Context, path string, paths chan<- pathInf
 			paths <- pathInfo{
 				path:       path,
 				lastUpdate: info.ModTime().UTC(),
+				sizeBytes:  info.Size(),
 			}
 
 			return nil
@@ -174,7 +176,7 @@ func (w worker) run(ctx context.Context, paths <-chan pathInfo, errChan chan err
 				if err != nil {
 					errChan <- fmt.Errorf("error putting file: %w", err)
 				}
-				w.existent.Add(path.path, time.Now().UTC())
+				w.existent.Add(path.path, time.Now().UTC(), path.sizeBytes)
 			case <-ctx.Done():
 				return
 			}

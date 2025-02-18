@@ -59,13 +59,13 @@ func (h Checker) Open(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("error parsing dateTime: %w", err)
 		}
-		h.Add(path, t)
+		h.Add(path, t, 0)
 	}
 
 	return nil
 }
 
-func (h *Checker) Add(path string, uploadedAt time.Time) {
+func (h *Checker) Add(path string, uploadedAt time.Time, _ int64) {
 	lock.Lock()
 	defer lock.Unlock()
 	h.files[path] = uploadedAt
