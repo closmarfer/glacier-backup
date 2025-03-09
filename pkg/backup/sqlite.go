@@ -10,6 +10,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const defaultDateLayout = "2006-01-02 15:04:05"
+
 type SqliteConfig struct {
 	Path string
 	Key  string
@@ -67,7 +69,7 @@ func (c *SQLiteChecker) Add(path string, uploadedAt time.Time, size int64) {
 	_, err := c.db.Exec(
 		"INSERT or REPLACE INTO files (`path`, uploaded_at, size_bytes) VALUES (?, ?, ?)",
 		path,
-		uploadedAt.Format("2006-01-02 15:04:05"),
+		uploadedAt.Format(defaultDateLayout),
 		size,
 	)
 	if err != nil {
@@ -107,8 +109,11 @@ func (c *SQLiteChecker) Exists(path string, lastUpdated time.Time) bool {
 
 	storedTime, err = time.Parse("2006-01-02T15:04:05Z", timeStr)
 	if err != nil {
-		fmt.Printf("Error parsing stored time: %v\n", err)
-		return false
+		storedTime, err = time.Parse(defaultDateLayout, timeStr)
+		if err != nil {
+			fmt.Printf("Error parsing stored time: %v\n", err)
+			return false
+		}
 	}
 
 	if lastUpdated.After(storedTime) {

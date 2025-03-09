@@ -11,6 +11,8 @@ import (
 
 const databaseName = "backup.db"
 
+const appVersion = "2.0"
+
 func main() {
 	cfg, err := serviceprovider.ProvideBackupConfiguration()
 	if err != nil {
@@ -36,7 +38,7 @@ func main() {
 		handler.Run()
 		return
 	}
-	help := "glacier-backup [--sizeCount] [--cleanRemote]"
+	help := "glacier-backup [--sizeCount] [--cleanRemote] [--version]"
 	if len(os.Args) > 2 {
 		fmt.Println("Error: number of max options: 1", help)
 		os.Exit(1)
@@ -50,6 +52,9 @@ func main() {
 	case "--cleanRemote":
 		handler := handlers.NewRemoteCleaner(eChecker, repo)
 		handler.Run()
+	case "--version":
+		fmt.Printf("Application version %v\n", appVersion)
+		os.Exit(0)
 	default:
 		fmt.Printf("Error: invalid argument '%v' provided\n", arg, help)
 		os.Exit(1)
