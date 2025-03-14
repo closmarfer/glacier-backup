@@ -5,13 +5,14 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
 	"os"
+	"runtime"
 
 	"github.com/closmarfer/glacier-backup/pkg/backup/handlers"
 )
 
 const databaseName = "backup.db"
 
-const appVersion = "2.0"
+const appVersion = "2.1"
 
 func main() {
 	cfg, err := serviceprovider.ProvideBackupConfiguration()
@@ -53,7 +54,7 @@ func main() {
 		handler := handlers.NewRemoteCleaner(eChecker, repo)
 		handler.Run()
 	case "--version":
-		fmt.Printf("Application version %v\n", appVersion)
+		fmt.Printf("Application version %v %v/%v\n", appVersion, runtime.GOOS, runtime.GOARCH)
 		os.Exit(0)
 	default:
 		fmt.Printf("Error: invalid argument '%v' provided\n", arg, help)

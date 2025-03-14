@@ -107,13 +107,9 @@ func (c *SQLiteChecker) Exists(path string, lastUpdated time.Time) bool {
 		return false
 	}
 
-	storedTime, err = time.Parse("2006-01-02T15:04:05Z", timeStr)
+	storedTime, err = c.parseTime(timeStr)
 	if err != nil {
-		storedTime, err = time.Parse(defaultDateLayout, timeStr)
-		if err != nil {
-			fmt.Printf("Error parsing stored time: %v\n", err)
-			return false
-		}
+		fmt.Printf("Error parsing stored time: %v\n", err)
 	}
 
 	if lastUpdated.After(storedTime) {
@@ -177,7 +173,7 @@ func (c *SQLiteChecker) GetFiles() map[string]time.Time {
 			continue
 		}
 
-		uploadedAt, err := time.Parse("2006-01-02 15:04:05", timeStr)
+		uploadedAt, err := c.parseTime(timeStr)
 		if err != nil {
 			fmt.Printf("Error parsing time: %v\n", err)
 			continue
@@ -187,4 +183,15 @@ func (c *SQLiteChecker) GetFiles() map[string]time.Time {
 	}
 
 	return files
+}
+
+func (c *SQLiteChecker) parseTime(timeStr string) (time.Time, error) {
+	t, err := time.Parse("2006-01-02T15:04:05Z", timeStr)
+	if err != nil {
+		t, err = time.Parse(defaultDateLayout, timeStr)
+		if err != nil {
+			return time.Time{}, err
+		}
+	}
+	return t, nil
 }
