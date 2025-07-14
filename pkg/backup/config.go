@@ -2,7 +2,6 @@ package backup
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -44,7 +43,7 @@ func (cd ConfigDecoder) LoadConfiguration() (Config, error) {
 		return cfg, err
 	}
 
-	yfile, err := ioutil.ReadFile(ypath)
+	yfile, err := os.ReadFile(ypath)
 
 	if err != nil {
 		return cfg, fmt.Errorf("error decoding yaml: %w", err)
@@ -70,4 +69,12 @@ func (conf Config) getApplicationPath(path string) (string, error) {
 	sep := string(os.PathSeparator)
 	return userHome + sep + glacierBackupFolder + sep + path, nil
 
+}
+
+func (conf Config) IsLocal() bool {
+	return conf.SelectedRemote == "local"
+}
+
+func (conf Config) IsS3() bool {
+	return conf.SelectedRemote == "s3"
 }

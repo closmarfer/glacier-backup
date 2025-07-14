@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	http2 "net/http"
 	"os"
 
@@ -21,12 +20,12 @@ type Config struct {
 	Bucket string
 }
 
-type Repository struct {
+type repository struct {
 	config Config
 	client *s3.Client
 }
 
-func (repo Repository) Delete(ctx context.Context, remotePath string) error {
+func (repo repository) Delete(ctx context.Context, remotePath string) error {
 	if string(remotePath[0]) == "/" {
 		remotePath = remotePath[1:]
 	}
@@ -39,24 +38,24 @@ func (repo Repository) Delete(ctx context.Context, remotePath string) error {
 	return err
 }
 
-func NewS3Repository(config Config, client *s3.Client) Repository {
-	return Repository{config: config, client: client}
+func NewS3Repository(config Config, client *s3.Client) backup.RemoteFilesRepository {
+	return repository{config: config, client: client}
 }
 
-func (repo Repository) PutGlacier(ctx context.Context, localPath string) error {
+func (repo repository) PutGlacier(ctx context.Context, localPath string) error {
 	return repo.put(ctx, localPath, localPath, types.StorageClassDeepArchive)
 }
 
-func (repo Repository) PutEditable(ctx context.Context, localPath string, remotePath string) error {
+func (repo repository) PutEditable(ctx context.Context, localPath string, remotePath string) error {
 	return repo.put(ctx, localPath, remotePath, types.StorageClassStandard)
 }
 
-func (repo Repository) put(ctx context.Context, localPath string, remotePath string, s types.StorageClass) error {
+func (repo repository) put(ctx context.Context, localPath string, remotePath string, s types.StorageClass) error {
 	if string(remotePath[0]) == "/" {
 		remotePath = remotePath[1:]
 	}
 
-	content, err := ioutil.ReadFile(localPath)
+	content, err := os.ReadFile(localPath)
 	if err != nil {
 		return fmt.Errorf("error reading file: %w", err)
 	}
@@ -72,7 +71,7 @@ func (repo Repository) put(ctx context.Context, localPath string, remotePath str
 	return err
 }
 
-func (repo Repository) Get(ctx context.Context, remotePath string) (string, error) {
+func (repo repository) Get(ctx context.Context, remotePath string) (string, error) {
 	buff, err := repo.getBuffer(ctx, remotePath)
 	if err != nil {
 		return "", err
@@ -80,7 +79,7 @@ func (repo Repository) Get(ctx context.Context, remotePath string) (string, erro
 	return buff.String(), nil
 }
 
-func (repo Repository) Download(ctx context.Context, key string, path string) error {
+func (repo repository) Download(ctx context.Context, key string, path string) error {
 	buff, err := repo.getBuffer(ctx, key)
 	if err != nil {
 		return err
@@ -88,7 +87,7 @@ func (repo Repository) Download(ctx context.Context, key string, path string) er
 	return os.WriteFile(path, buff.Bytes(), 0644)
 }
 
-func (repo Repository) getBuffer(ctx context.Context, remotePath string) (*bytes.Buffer, error) {
+func (repo repository) getBuffer(ctx context.Context, remotePath string) (*bytes.Buffer, error) {
 	object, err := repo.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(repo.config.Bucket),
 		Key:    aws.String(remotePath),
