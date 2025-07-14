@@ -12,7 +12,7 @@ import (
 
 const databaseName = "backup.db"
 
-const appVersion = "2.1"
+const appVersion = "3.0"
 
 func main() {
 	cfg, err := serviceprovider.ProvideBackupConfiguration()

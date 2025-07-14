@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -12,12 +11,12 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
 
-type Repository struct {
+type repository struct {
 	localPath string
 	timeout   time.Duration
 }
 
-func (r Repository) Download(_ context.Context, key string, path string) error {
+func (r repository) Download(_ context.Context, key string, path string) error {
 	file, err := os.ReadFile(key)
 	if err != nil {
 		return err
@@ -25,46 +24,46 @@ func (r Repository) Download(_ context.Context, key string, path string) error {
 	return os.WriteFile(path, file, 0600)
 }
 
-func (r Repository) Delete(_ context.Context, remotePath string) error {
+func (r repository) Delete(_ context.Context, remotePath string) error {
 	newPath := r.getPath(remotePath)
 	time.Sleep(r.timeout)
 	return os.Remove(newPath)
 }
 
-func NewRepository(cfg backup.Config) (Repository, error) {
+func NewRepository(cfg backup.Config) (backup.RemoteFilesRepository, error) {
 	localPath, ok := cfg.Remotes["local"].CustomConfig["localPath"]
 	if !ok {
-		return Repository{}, errors.New("localPath not defined for local remote in config.yaml")
+		return repository{}, errors.New("localPath not defined for local remote in config.yaml")
 	}
 
 	timeout, ok := cfg.Remotes["local"].CustomConfig["timeout"]
 	if !ok {
-		return Repository{}, errors.New("timeout not defined for local remote in config.yaml")
+		return repository{}, errors.New("timeout not defined for local remote in config.yaml")
 	}
 
 	duration, err := time.ParseDuration(timeout)
 	if err != nil {
-		return Repository{}, err
+		return repository{}, err
 	}
 
-	return Repository{localPath: localPath, timeout: duration}, nil
+	return repository{localPath: localPath, timeout: duration}, nil
 }
 
-func (r Repository) PutGlacier(ctx context.Context, localPath string) error {
+func (r repository) PutGlacier(ctx context.Context, localPath string) error {
 	return r.put(ctx, localPath, localPath)
 }
 
-func (r Repository) PutEditable(_ context.Context, localPath string, remotePath string) error {
-	fileContents, err := ioutil.ReadFile(localPath)
+func (r repository) PutEditable(_ context.Context, localPath string, remotePath string) error {
+	fileContents, err := os.ReadFile(localPath)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(remotePath, fileContents, os.ModePerm)
+	return os.WriteFile(remotePath, fileContents, os.ModePerm)
 }
 
-func (r Repository) put(_ context.Context, localPath string, remotePath string) error {
+func (r repository) put(_ context.Context, localPath string, remotePath string) error {
 	sep := string(os.PathSeparator)
-	fileContents, err := ioutil.ReadFile(localPath)
+	fileContents, err := os.ReadFile(localPath)
 	if err != nil {
 		return err
 	}
@@ -82,17 +81,17 @@ func (r Repository) put(_ context.Context, localPath string, remotePath string) 
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(newPath, fileContents, os.ModePerm)
+	return os.WriteFile(newPath, fileContents, os.ModePerm)
 }
 
-func (r Repository) Get(_ context.Context, remotePath string) (string, error) {
-	file, err := ioutil.ReadFile(r.getPath(remotePath))
+func (r repository) Get(_ context.Context, remotePath string) (string, error) {
+	file, err := os.ReadFile(r.getPath(remotePath))
 	if err != nil {
 		return "", backup.NewFileNotFoundError(remotePath)
 	}
 	return string(file), err
 }
 
-func (r Repository) getPath(remotePath string) string {
+func (r repository) getPath(remotePath string) string {
 	return fmt.Sprintf("%v/%v", r.localPath, remotePath)
 }
