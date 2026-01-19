@@ -8,7 +8,7 @@ import (
 
 const glacierBackupFolder = ".glacier-backup"
 
-type Remote struct {
+type remote struct {
 	CustomConfig map[string]string `yaml:"customConfig"`
 }
 
@@ -17,7 +17,7 @@ type Config struct {
 	IgnoredPatterns []string          `yaml:"ignoredPatternsKey"`
 	SelectedRemote  string            `yaml:"selectedRemote"`
 	DatabaseKey     string            `yaml:"databaseKey" default:"backup.db"`
-	Remotes         map[string]Remote `yaml:"remotes"`
+	Remotes         map[string]remote `yaml:"remotes"`
 	GlacierPath     string
 }
 
