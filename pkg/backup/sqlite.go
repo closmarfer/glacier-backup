@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -138,7 +139,7 @@ func (c *SQLiteChecker) Close(ctx context.Context) error {
 		return fmt.Errorf("error closing database: %w", err)
 	}
 
-	return nil
+	return os.Remove(c.cfg.Path)
 }
 
 func (c *SQLiteChecker) Ignored() int {

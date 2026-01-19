@@ -2,22 +2,24 @@ package local
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
 
 type repository struct {
-	localPath string
-	timeout   time.Duration
+	destinationPath string
+	separator       string
+}
+
+func NewRepository(cfg Config) (backup.RemoteFilesRepository, error) {
+	return repository{destinationPath: cfg.DestinationPath, separator: string(os.PathSeparator)}, nil
 }
 
 func (r repository) Download(_ context.Context, key string, path string) error {
-	file, err := os.ReadFile(key)
+	file, err := os.ReadFile(r.destinationPath + r.separator + key)
 	if err != nil {
 		return err
 	}
@@ -26,27 +28,7 @@ func (r repository) Download(_ context.Context, key string, path string) error {
 
 func (r repository) Delete(_ context.Context, remotePath string) error {
 	newPath := r.getPath(remotePath)
-	time.Sleep(r.timeout)
 	return os.Remove(newPath)
-}
-
-func NewRepository(cfg backup.Config) (backup.RemoteFilesRepository, error) {
-	localPath, ok := cfg.Remotes["local"].CustomConfig["localPath"]
-	if !ok {
-		return repository{}, errors.New("localPath not defined for local remote in config.yaml")
-	}
-
-	timeout, ok := cfg.Remotes["local"].CustomConfig["timeout"]
-	if !ok {
-		return repository{}, errors.New("timeout not defined for local remote in config.yaml")
-	}
-
-	duration, err := time.ParseDuration(timeout)
-	if err != nil {
-		return repository{}, err
-	}
-
-	return repository{localPath: localPath, timeout: duration}, nil
 }
 
 func (r repository) PutGlacier(ctx context.Context, localPath string) error {
@@ -58,30 +40,32 @@ func (r repository) PutEditable(_ context.Context, localPath string, remotePath 
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(remotePath, fileContents, os.ModePerm)
+	return os.WriteFile(r.destinationPath+r.separator+remotePath, fileContents, os.ModePerm)
 }
 
 func (r repository) put(_ context.Context, localPath string, remotePath string) error {
-	sep := string(os.PathSeparator)
 	fileContents, err := os.ReadFile(localPath)
 	if err != nil {
 		return err
 	}
 	newPath := r.getPath(remotePath)
 
-	parts := strings.Split(newPath, sep)
+	parts := strings.Split(newPath, r.separator)
 
 	parts2 := parts[0 : len(parts)-1]
 
-	newPath2 := strings.Join(parts2, sep)
-
-	time.Sleep(r.timeout)
+	newPath2 := strings.Join(parts2, r.separator)
 
 	err = os.MkdirAll(newPath2, os.ModePerm)
 	if err != nil {
 		return err
 	}
 	return os.WriteFile(newPath, fileContents, os.ModePerm)
+}
+
+// cleanPath it prevents error on Windows systems
+func (r repository) cleanPath(path string) string {
+	return strings.Replace(path, ":", r.separator, 1)
 }
 
 func (r repository) Get(_ context.Context, remotePath string) (string, error) {
@@ -93,5 +77,5 @@ func (r repository) Get(_ context.Context, remotePath string) (string, error) {
 }
 
 func (r repository) getPath(remotePath string) string {
-	return fmt.Sprintf("%v/%v", r.localPath, remotePath)
+	return fmt.Sprintf("%v%v%v", r.destinationPath, r.separator, r.cleanPath(remotePath))
 }

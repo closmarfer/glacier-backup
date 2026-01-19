@@ -3,8 +3,7 @@ package backup
 import (
 	"fmt"
 	"os"
-
-	"gopkg.in/yaml.v2"
+	"strings"
 )
 
 const glacierBackupFolder = ".glacier-backup"
@@ -15,12 +14,19 @@ type Remote struct {
 
 type Config struct {
 	PathsToBackup   []string          `yaml:"pathsToBackup"`
-	IgnoredPatterns []string          `yaml:"ignoredPatterns"`
+	IgnoredPatterns []string          `yaml:"ignoredPatternsKey"`
 	SelectedRemote  string            `yaml:"selectedRemote"`
 	DatabaseKey     string            `yaml:"databaseKey" default:"backup.db"`
 	Remotes         map[string]Remote `yaml:"remotes"`
 	GlacierPath     string
 }
+
+const (
+	pathsToBackupKey   = "GLACIER_BACKUP_PATHS_TO_BACKUP"
+	ignoredPatternsKey = "GLACIER_BACKUP_IGNORED_PATTERNS"
+)
+
+var requiredVariables = []string{pathsToBackupKey, ignoredPatternsKey}
 
 type ConfigDecoder struct {
 }
@@ -29,33 +35,28 @@ func NewConfigDecoder() *ConfigDecoder {
 	return &ConfigDecoder{}
 }
 
-func (cd ConfigDecoder) LoadConfiguration() (Config, error) {
-	var cfg Config
+func (cd ConfigDecoder) LoadConfiguration(selectedRemote string) (Config, error) {
+	for _, s := range requiredVariables {
+		if os.Getenv(s) == "" {
+			return Config{}, fmt.Errorf("environment variable %s not set", s)
+		}
+	}
+	pathsToBackup := strings.Split(os.Getenv(pathsToBackupKey), ";")
+	ignoredPatterns := strings.Split(os.Getenv(ignoredPatternsKey), ";")
+
 	userHome, err := os.UserHomeDir()
-
 	if err != nil {
-		return cfg, err
+		return Config{}, err
 	}
 
-	ypath, err := cfg.getApplicationPath("config.yaml")
-
-	if err != nil {
-		return cfg, err
+	cfg := Config{
+		PathsToBackup:   pathsToBackup,
+		IgnoredPatterns: ignoredPatterns,
+		SelectedRemote:  selectedRemote,
+		DatabaseKey:     "",
+		Remotes:         nil,
+		GlacierPath:     userHome,
 	}
-
-	yfile, err := os.ReadFile(ypath)
-
-	if err != nil {
-		return cfg, fmt.Errorf("error decoding yaml: %w", err)
-	}
-
-	err = yaml.Unmarshal(yfile, &cfg)
-
-	if err != nil {
-		return cfg, fmt.Errorf("error unmarshal yaml: %w", err)
-	}
-
-	cfg.GlacierPath = userHome
 
 	return cfg, nil
 }

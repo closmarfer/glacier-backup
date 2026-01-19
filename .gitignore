@@ -4,6 +4,7 @@
 .*.swp
 .run
 .vscode
+.env
 
 # Generated & compiled files
 bin/

@@ -133,7 +133,7 @@ func (h Backuper) iterate(ctx context.Context, path string, paths chan<- pathInf
 	}
 
 	if err != nil {
-		return fmt.Errorf("error iterating folder: %w", err)
+		return fmt.Errorf("error iterating folder %v: %w", path, err)
 	}
 	return nil
 }
