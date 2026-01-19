@@ -2,8 +2,9 @@ package serviceprovider
 
 import (
 	"context"
-	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/s3"
 	"log"
+
+	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/s3"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	s3aws "github.com/aws/aws-sdk-go-v2/service/s3"
