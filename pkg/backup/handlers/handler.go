@@ -12,16 +12,16 @@ import (
 
 const processingFormat = "Processing. Uploaded: %v, Ignored: %v\n"
 
-type Handler struct {
+type handler struct {
 	checker  backup.ExistentFilesChecker
 	backuper backup.Backuper
 }
 
-func NewHandler(checker backup.ExistentFilesChecker, backuper backup.Backuper) Handler {
-	return Handler{checker: checker, backuper: backuper}
+func NewHandler(checker backup.ExistentFilesChecker, backuper backup.Backuper) backup.Application {
+	return handler{checker: checker, backuper: backuper}
 }
 
-func (h Handler) Run() {
+func (h handler) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	shutdown := make(chan os.Signal, 1)
