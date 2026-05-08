@@ -92,5 +92,4 @@ If you execute the command again and some files have been modified after their l
 
 ### TODO list
 
-* Add testing
 * Add more remote storages (eg. [Cloud Storage](https://cloud.google.com/storage)) implementing the `RemoteFilesRepository interface` and documenting the required environment variables.
