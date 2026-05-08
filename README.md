@@ -25,7 +25,7 @@ The application is configured using environment variables. You must set the foll
 
 Depending on the remote storage you choose (`s3` or `local`), you need to set additional variables.
 
-#### Apple S3 Glacier (`s3`)
+#### AWS S3 Glacier (`s3`)
 
 * `GLACIER_BACKUP_S3_BUCKETS`: The name of the S3 bucket where files will be stored.
 * `GLACIER_BACKUP_S3_REGION`: The AWS region of your bucket (e.g., `us-east-1`, `eu-west-1`).
@@ -86,15 +86,11 @@ Found files are stored in a local SQLite database (`backup.db`). When you run th
 This application has no infrastructure requirements (DB, cache) so to develop you can run
 simply the `cmd/main.go` file.
 
-To prevent upload the same files that are already uploaded, the application uses a CSV list
-of uploaded files. This list (`uploaded_files.csv`) is stored in the same bucket and it 
-contains a list of uploaded files + the uploaded date.
+To prevent uploading the same files multiple times, the application uses a SQLite database (`backup.db`) that is stored remotely (S3 bucket or local destination, depending on the selected remote) and downloaded at startup.
 
-If you executes the command again and some files have the updated_at date after the `uploaded_date` from the CSV file
-they will be updated in the remote bucket.
+If you execute the command again and some files have been modified after their last upload time, they will be uploaded again.
 
 ### TODO list
 
 * Add testing
-* Add more remote storages (eg. [Cloud Storage](https://cloud.google.com/storage)) implementing the `RemoteFilesRepository interface` and adding
-the custom configuration params in the `var/config.yaml` file.
+* Add more remote storages (eg. [Cloud Storage](https://cloud.google.com/storage)) implementing the `RemoteFilesRepository interface` and documenting the required environment variables.
