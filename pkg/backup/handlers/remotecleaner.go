@@ -8,16 +8,16 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
 
-type RemoteCleaner struct {
+type remoteCleaner struct {
 	repo    backup.RemoteFilesRepository
 	checker backup.ExistentFilesChecker
 }
 
-func NewRemoteCleaner(checker backup.ExistentFilesChecker, repo backup.RemoteFilesRepository) RemoteCleaner {
-	return RemoteCleaner{checker: checker, repo: repo}
+func NewRemoteCleaner(checker backup.ExistentFilesChecker, repo backup.RemoteFilesRepository) backup.Application {
+	return remoteCleaner{checker: checker, repo: repo}
 }
 
-func (c RemoteCleaner) Run() {
+func (c remoteCleaner) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

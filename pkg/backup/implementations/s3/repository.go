@@ -8,6 +8,8 @@ import (
 	"io"
 	http2 "net/http"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
@@ -15,10 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
-
-type Config struct {
-	Bucket string
-}
 
 type repository struct {
 	config Config
@@ -53,6 +51,10 @@ func (repo repository) PutEditable(ctx context.Context, localPath string, remote
 func (repo repository) put(ctx context.Context, localPath string, remotePath string, s types.StorageClass) error {
 	if string(remotePath[0]) == "/" {
 		remotePath = remotePath[1:]
+	}
+
+	if runtime.GOOS == "windows" {
+		remotePath = repo.cleanPath(remotePath)
 	}
 
 	content, err := os.ReadFile(localPath)
@@ -110,4 +112,9 @@ func (repo repository) getBuffer(ctx context.Context, remotePath string) (*bytes
 
 	_, err = buff.ReadFrom(object.Body)
 	return buff, err
+}
+
+func (repo repository) cleanPath(path string) string {
+	s := strings.Replace(path, "\\", "/", -1)
+	return strings.Replace(s, ":/", "/", 1)
 }

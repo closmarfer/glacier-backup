@@ -1,3 +1,5 @@
+//go:generate go run go.uber.org/mock/mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE -build_constraint=mocks
+
 package backup
 
 import (
@@ -48,7 +50,11 @@ type ExistentFilesChecker interface {
 	GetFiles() map[string]time.Time
 }
 
-type Backuper struct {
+type Backuper interface {
+	Upload(ctx context.Context, errChan chan error) error
+}
+
+type fileBackuper struct {
 	filesRepository RemoteFilesRepository
 	eChecker        ExistentFilesChecker
 	config          Config
@@ -59,14 +65,14 @@ func NewBackuper(
 	eChecker ExistentFilesChecker,
 	config Config,
 ) Backuper {
-	return Backuper{
+	return fileBackuper{
 		filesRepository: filesRepository,
 		eChecker:        eChecker,
 		config:          config,
 	}
 }
 
-func (h Backuper) Upload(ctx context.Context, errChan chan error) error {
+func (h fileBackuper) Upload(ctx context.Context, errChan chan error) error {
 	defer func(eChecker ExistentFilesChecker, ctx context.Context) {
 		err := eChecker.Close(ctx)
 		if err != nil {
@@ -103,7 +109,7 @@ func (h Backuper) Upload(ctx context.Context, errChan chan error) error {
 	return nil
 }
 
-func (h Backuper) iterate(ctx context.Context, path string, paths chan<- pathInfo) error {
+func (h fileBackuper) iterate(ctx context.Context, path string, paths chan<- pathInfo) error {
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		select {
 		case <-ctx.Done():
@@ -133,12 +139,12 @@ func (h Backuper) iterate(ctx context.Context, path string, paths chan<- pathInf
 	}
 
 	if err != nil {
-		return fmt.Errorf("error iterating folder: %w", err)
+		return fmt.Errorf("error iterating folder %v: %w", path, err)
 	}
 	return nil
 }
 
-func (h Backuper) shouldBeIgnored(path string) bool {
+func (h fileBackuper) shouldBeIgnored(path string) bool {
 	for _, ignoredPattern := range h.config.IgnoredPatterns {
 		r := regexp.MustCompile(ignoredPattern)
 		if r.MatchString(path) {

@@ -8,17 +8,17 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup"
 )
 
-type SizeCounter struct {
+type sizeCounter struct {
 	cfg     backup.Config
 	repo    backup.RemoteFilesRepository
 	checker backup.ExistentFilesChecker
 }
 
-func NewSizeCounter(checker backup.ExistentFilesChecker) SizeCounter {
-	return SizeCounter{checker: checker}
+func NewSizeCounter(checker backup.ExistentFilesChecker) backup.Application {
+	return sizeCounter{checker: checker}
 }
 
-func (s SizeCounter) Run() {
+func (s sizeCounter) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

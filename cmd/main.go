@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/closmarfer/glacier-backup/pkg/backup"
-	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
 	"os"
 	"runtime"
 
+	"github.com/closmarfer/glacier-backup/pkg/backup"
 	"github.com/closmarfer/glacier-backup/pkg/backup/handlers"
+	"github.com/closmarfer/glacier-backup/pkg/backup/serviceprovider"
 )
 
 const databaseName = "backup.db"
@@ -15,7 +15,20 @@ const databaseName = "backup.db"
 const appVersion = "3.0"
 
 func main() {
-	cfg, err := serviceprovider.ProvideBackupConfiguration()
+	var selectedRemote string
+
+	if len(os.Args) == 1 {
+		printHelp()
+	}
+
+	if len(os.Args) != 3 {
+		fmt.Println("Error: invalid number of options")
+		printHelp()
+		os.Exit(1)
+	}
+
+	selectedRemote = os.Args[1]
+	cfg, err := serviceprovider.ProvideBackupConfiguration(selectedRemote)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
@@ -29,35 +42,29 @@ func main() {
 
 	eChecker := backup.NewSQLiteChecker(backup.SqliteConfig{
 		Path: cfg.GlacierPath + string(os.PathSeparator) + databaseName,
-		Key:  cfg.DatabaseKey,
+		Key:  databaseName,
 	}, repo)
 
-	back := backup.NewBackuper(repo, eChecker, cfg)
-
-	if len(os.Args) == 1 {
+	arg := os.Args[2]
+	switch arg {
+	case "--backup":
+		back := backup.NewBackuper(repo, eChecker, cfg)
 		handler := handlers.NewHandler(eChecker, back)
 		handler.Run()
-		return
-	}
-	help := "glacier-backup [--sizeCount] [--cleanRemote] [--version]"
-	if len(os.Args) > 2 {
-		fmt.Println("Error: number of max options: 1", help)
-		os.Exit(1)
-	}
-
-	arg := os.Args[1]
-	switch arg {
 	case "--sizeCount":
 		handler := handlers.NewSizeCounter(eChecker)
 		handler.Run()
 	case "--cleanRemote":
 		handler := handlers.NewRemoteCleaner(eChecker, repo)
 		handler.Run()
-	case "--version":
-		fmt.Printf("Application version %v %v/%v\n", appVersion, runtime.GOOS, runtime.GOARCH)
-		os.Exit(0)
 	default:
-		fmt.Printf("Error: invalid argument '%v' provided\n", arg, help)
+		printHelp()
 		os.Exit(1)
 	}
+}
+
+func printHelp() {
+	help := "glacier-backup [remote] [--sizeCount] [--cleanRemote] [--backup]"
+	fmt.Printf("Application version %v %v/%v\n", appVersion, runtime.GOOS, runtime.GOARCH)
+	fmt.Println("Usage: " + help)
 }

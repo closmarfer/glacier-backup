@@ -4,9 +4,12 @@
 .*.swp
 .run
 .vscode
+.env
 
 # Generated & compiled files
 bin/
 vendor/
+*_mock.go
+mock_*.go
 
 var/tmp/

@@ -1,7 +1,6 @@
 package serviceprovider
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/closmarfer/glacier-backup/pkg/backup"
@@ -9,11 +8,9 @@ import (
 	"github.com/closmarfer/glacier-backup/pkg/backup/implementations/s3"
 )
 
-const s3Key = "s3"
-
-func ProvideBackupConfiguration() (backup.Config, error) {
+func ProvideBackupConfiguration(selectedRemote string) (backup.Config, error) {
 	cfgDecoder := backup.NewConfigDecoder()
-	return cfgDecoder.LoadConfiguration()
+	return cfgDecoder.LoadConfiguration(selectedRemote)
 }
 
 func ProvideRemoteFilesRepository(cfg backup.Config) (backup.RemoteFilesRepository, error) {
@@ -23,7 +20,12 @@ func ProvideRemoteFilesRepository(cfg backup.Config) (backup.RemoteFilesReposito
 func makeRepositoryOrFail(cfg backup.Config) (backup.RemoteFilesRepository, error) {
 	fmt.Printf("Selected remote: '%v'\n", cfg.SelectedRemote)
 	if cfg.IsLocal() {
-		localRepository, err := local.NewRepository(cfg)
+		c, err := local.NewConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		localRepository, err := local.NewRepository(c)
 		if err != nil {
 			return nil, err
 		}
@@ -31,31 +33,24 @@ func makeRepositoryOrFail(cfg backup.Config) (backup.RemoteFilesRepository, erro
 	}
 
 	if cfg.IsS3() {
-		s3Config, ok := cfg.Remotes[s3Key]
-		if !ok {
-			return nil, errors.New("configuration not defined for remote s3 in config.yaml")
+		s3cfg, err := s3.NewConfig()
+		if err != nil {
+			return nil, err
 		}
 
-		configUser := getS3Config(s3Config)
-
-		client, err := provideS3Client(configUser)
+		client, err := provideS3Client(s3cfg)
 
 		if err != nil {
 			return nil, fmt.Errorf("s3 client could not be created: %w", err)
 		}
 
 		s3Repository := s3.NewS3Repository(
-			s3.Config{Bucket: configUser.Bucket},
+			s3cfg,
 			client,
 		)
 
 		return s3Repository, nil
 	}
 
-	return nil, fmt.Errorf("not supported remote %v", cfg.SelectedRemote)
-}
-
-func getS3Config(remote backup.Remote) s3Config {
-	custom := remote.CustomConfig
-	return newS3Config(custom["bucket"], custom["region"], custom["profileName"])
+	return nil, fmt.Errorf("not supported remote '%v'", cfg.SelectedRemote)
 }
