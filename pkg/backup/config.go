@@ -8,16 +8,10 @@ import (
 
 const glacierBackupFolder = ".glacier-backup"
 
-type remote struct {
-	CustomConfig map[string]string `yaml:"customConfig"`
-}
-
 type Config struct {
-	PathsToBackup   []string          `yaml:"pathsToBackup"`
-	IgnoredPatterns []string          `yaml:"ignoredPatternsKey"`
-	SelectedRemote  string            `yaml:"selectedRemote"`
-	DatabaseKey     string            `yaml:"databaseKey" default:"backup.db"`
-	Remotes         map[string]remote `yaml:"remotes"`
+	PathsToBackup   []string
+	IgnoredPatterns []string
+	SelectedRemote  string
 	GlacierPath     string
 }
 
@@ -53,8 +47,6 @@ func (cd ConfigDecoder) LoadConfiguration(selectedRemote string) (Config, error)
 		PathsToBackup:   pathsToBackup,
 		IgnoredPatterns: ignoredPatterns,
 		SelectedRemote:  selectedRemote,
-		DatabaseKey:     "",
-		Remotes:         nil,
 		GlacierPath:     userHome,
 	}
 
